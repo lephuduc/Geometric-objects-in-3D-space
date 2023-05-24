@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+        />
+        <link type="text/css" rel="stylesheet" href="main.css" />
+        <title>Demo</title>
+    </head>
+    <body>
+        <div id="info">
+            "W" translate | "E" rotate | "R" scale <br />
+            "Q" change object | "Esc" reset <br />
+        </div>
+
+        <script type="module">
+            import * as THREE from "/build/three.module.js"
+            import { OrbitControls } from "/libs/OrbitControls.js"
+            import { TransformControls } from "/libs/TransformControls.js"
+
+            let scene, camera, renderer, orbit, control, currentPos, pos, t
+            t = 1
+
+            scene = new THREE.Scene()
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+            scene.add(ambientLight)
+
+            const pointLight = new THREE.PointLight(0xffffff, 1)
+            pointLight.position.z = 5
+            pointLight.position.y = 10
+            scene.add(pointLight)
+
+            camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.01,
+                30000
+            )
+            camera.position.set(1, 1, 5)
+
+            renderer = new THREE.WebGLRenderer()
+            renderer.setSize(window.innerWidth, window.innerHeight)
+            document.body.appendChild(renderer.domElement)
+
+            const geometry = new THREE.BoxGeometry(1, 1, 1)
+            const material = new THREE.MeshLambertMaterial({ color: "blueviolet" })
+
+            let object = new THREE.Mesh(geometry, material)
+            scene.add(object)
+            currentPos = new THREE.Vector3()
+
+            scene.add(new THREE.GridHelper(10, 20))
+
+            orbit = new OrbitControls(camera, renderer.domElement)
+            control = new TransformControls(camera, renderer.domElement)
+
+            control.addEventListener("dragging-changed", (e) => {
+                orbit.enabled = !e.value
+            })
+
+            control.attach(object)
+            scene.add(control)
+
+            const loader = new THREE.TextureLoader()
+            loader.load("./picture/object.png", (texture) => {
+                material.map = texture
+                animate()
+            })
+
+            window.addEventListener("resize", onWindowResize)
+
+            window.addEventListener("keydown", function (event) {
+                switch (event.keyCode) {
+                    case 87: // W
+                        control.setMode("translate")
+                        break
+
+                    case 69: // E
+                        control.setMode("rotate")
+                        break
+
+                    case 82: // R
+                        control.setMode("scale")
+                        break
+
+                    case 81: //Q
+                        scene.remove(object)
+                        scene.remove(control)
+                        if (t === 1) {
+                            t++
+                            control.setMode("translate")
+                            currentPos = object.position
+                            geometry = new THREE.SphereGeometry(1, 32, 16)
+                            material = new THREE.MeshLambertMaterial({ color: "blueviolet" })
+                        } else if (t === 2) {
+                            t++
+                            control.setMode("translate")
+                            currentPos = object.position
+                            geometry = new THREE.TetrahedronGeometry(1, 0)
+                            material = new THREE.MeshLambertMaterial({ color: "blueviolet" })
+                        } else if (t === 3) {
+                            t++
+                            control.setMode("translate")
+                            currentPos = object.position
+                            geometry = new THREE.CylinderGeometry(1, 1, 1.5, 8)
+                            material = new THREE.MeshLambertMaterial({ color: "blueviolet" })
+                        } else {
+                            t = 1
+                            control.setMode("translate")
+                            currentPos = object.position
+                            geometry = new THREE.BoxGeometry(1, 1, 1)
+                            material = new THREE.MeshLambertMaterial({ color: "blueviolet" })
+                        }
+                        object = new THREE.Mesh(geometry, material)
+                        scene.add(object)
+                        object.position.copy(currentPos)
+                        control.attach(object)
+                        scene.add(control)
+                        loader.load("./picture/object.png", (texture) => {
+                            material.map = texture
+                            animate()
+                        })
+                        break
+
+                    case 27: // Esc
+                        location.reload()
+                        break
+                }
+            })
+
+            function onWindowResize() {
+                const aspect = window.innerWidth / window.innerHeight
+
+                camera.aspect = aspect
+                camera.updateProjectionMatrix()
+
+                camera.left = cameraOrtho.bottom * aspect
+                camera.right = cameraOrtho.top * aspect
+                camera.updateProjectionMatrix()
+
+                renderer.setSize(window.innerWidth, window.innerHeight)
+
+                render()
+            }
+
+            control.setMode("translate")
+
+            function animate() {
+                requestAnimationFrame(animate)
+                //object.rotation.x += 0.01
+                //object.rotation.y += 0.01
+                renderer.render(scene, camera)
+            }
+        </script>
+    </body>
+</html>
